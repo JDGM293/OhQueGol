@@ -1233,10 +1233,57 @@ body::before {
 </div>
 
 <!-- ══════════════ FIREBASE SDK ══════════════ -->
-<!-- Firebase se carga solo cuando la app está en un servidor web (hosting) -->
-<script>
-// Firebase stub para modo demo (archivo local)
-window._fb = null; // null = modo demo, sin Firebase
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCc0oIgtZNe7CXf6YYiyxvLvNffhf83lhU",
+    authDomain: "quinielapro-7d0f2.firebaseapp.com",
+    projectId: "quinielapro-7d0f2",
+    storageBucket: "quinielapro-7d0f2.firebasestorage.app",
+    messagingSenderId: "403061639708",
+    appId: "1:403061639708:web:e14ccd9e7e2de1e5222dd9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Exponer _fb como objeto global con todos los métodos que usa la app
+  window._fb = {
+    auth,
+    db,
+    // Auth
+    signInWithEmailAndPassword: (email, pass) => signInWithEmailAndPassword(auth, email, pass),
+    createUserWithEmailAndPassword: (email, pass) => createUserWithEmailAndPassword(auth, email, pass),
+    signOut: () => signOut(auth),
+    updateEmail: (user, email) => updateEmail(user, email),
+    updatePassword: (user, pass) => updatePassword(user, pass),
+    onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+    // Firestore
+    serverTimestamp,
+    collection: (col) => collection(db, col),
+    doc: (col, id) => id ? doc(db, col, id) : doc(collection(db, col)),
+    addDoc: (col, data) => addDoc(col, data),
+    getDoc: (ref) => getDoc(ref),
+    getDocs: (q) => getDocs(q),
+    updateDoc: (ref, data) => updateDoc(ref, data),
+    deleteDoc: (ref) => deleteDoc(ref),
+    query: (...args) => query(...args),
+    where: (...args) => where(...args),
+    orderBy: (...args) => orderBy(...args),
+  };
+
+  // Escuchar cambios de sesión
+  onAuthStateChanged(auth, (user) => {
+    if (user && typeof onFirebaseAuthReady === 'function') {
+      onFirebaseAuthReady(user);
+    }
+  });
+
+  console.log('✅ Firebase real iniciado — proyecto: quinielapro-7d0f2');
 </script>
 
 <!-- ══════════════ SCRIPT ══════════════ -->
@@ -1403,6 +1450,12 @@ function enterDemo() {
   App.profile = {name:'Josué David', nick:'Admin', country:'ES', currency:'EUR', symbol:'€', isAdmin:true, totalPoints:0, totalWins:0};
   App.isAdmin = true;
   initDemoData();
+  enterApp();
+}
+
+async function onFirebaseAuthReady(user) {
+  if (App.user) return; // ya estaba logueado
+  await loadProfile(user);
   enterApp();
 }
 
